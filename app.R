@@ -1,3 +1,6 @@
+# Running app code:
+# shiny::runGitHub(repo = "558FinalProject", username = "RoccoMatarazzo", ref="main")
+
 library(shiny)
 library(tidyverse)
 
@@ -6,7 +9,13 @@ ui <- fluidPage(
   navbarPage(
     title = "ST558 Final Project",
     id = "navbar",
-    tabPanel("About", "Everything for Tab 1!"),
+    tabPanel("About", 
+             
+    p("This Shiny App is a culmination of the Master's Course ST558,
+      Data Science with R, taught at North Carolina State University."
+      ),
+    p("This app explores baseball data from the popular Baseball Savant website.")
+             ),
     tabPanel("Data", "Everything for Tab 2"),
     tabPanel("Modeling",
       tabsetPanel(
@@ -21,6 +30,10 @@ ui <- fluidPage(
 
 # Server
 server <- function(input, output, session) {
+  
+  #############
+  # ABOUT TAB #
+  #############
   
 }
 
