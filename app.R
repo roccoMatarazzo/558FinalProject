@@ -1,6 +1,15 @@
 # Running app code:
 # shiny::runGitHub(repo = "558FinalProject", username = "RoccoMatarazzo", ref="main")
 
+
+
+
+
+### DO NOT FORGET TO UPDATE YOUR README.MD FILE! ! ! ! ! ! ! 
+
+
+
+library(caret)
 library(shiny)
 library(tidyverse)
 
@@ -27,8 +36,8 @@ ui <- fluidPage(
     
     # Tab Explanation
     p("The Data Exploration tab will allow the user to explore nummerical and
-      categorical summaries of the supplied data. There is options to plot data
-      or simply view the data in a dataTable format."),
+      categorical summaries of the supplied data. Functionality includes the ability
+      to plot data, view the data in dataTable format, and view correlation within the data."),
     p("The Modeling tab contains three subtabs. The inital subtab, Modeling Info,
       will give more deatil abotu the two models we are using: a multiple linear regression model and
       random forest model. The Model Fitting tab will allow the user to input desired parameters that
