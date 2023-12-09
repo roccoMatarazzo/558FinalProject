@@ -23,7 +23,7 @@ ggplot(dataset,
 
 # Histogram
 ggplot(dataset,
-       aes(x=age) #input variable
+       aes(x=home_run) #input variable
        ) + 
   geom_histogram(bins=10, fill = "#377EB8", color = "black") + # choose density or histogram
   theme_classic()

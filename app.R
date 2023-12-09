@@ -11,6 +11,7 @@ library(caret)
 library(shiny)
 library(tidyverse)
 library(RColorBrewer)
+library(shinythemes)
 
 dataset <- read_csv("BaseballSavant.csv") %>%
   rename("age" = "player_age",
@@ -18,11 +19,25 @@ dataset <- read_csv("BaseballSavant.csv") %>%
   mutate(PositionGroup =
            case_when(position %in% c('C', '1B', '2B', '3B', 'SS') ~ "Infield",
                      position %in% c('LF', 'CF', 'RF') ~ "Outfield",
-                     position %in% c('DH') ~ "Designated Hitter"))
+                     position %in% c('DH') ~ "Designated Hitter"),
+         AgeCategorical =
+           case_when(age < 26 ~ "25 or younger",
+                     age >= 26 & age < 31 ~ "Between 26-30",
+                     age >= 31 & age < 36 ~ "Between 31-35",
+                     age >= 36 ~ "36 or older"))
 
+dataset$position <- factor(dataset$position, 
+                           levels = c("C", "1B", "2B", "3B", "SS",
+                                      "LF", "CF", "RF", "DH"))
 
+dataset$PositionGroup <- factor(dataset$PositionGroup, 
+                                levels = c("Infield", "Outfield", "Designated Hitter"))
+
+dataset$AgeCategorical <- factor(dataset$AgeCategorical, 
+                                levels = c("25 or younger", "Between 26-30",
+                                           "Between 31-35", "36 or older"))
 # UI
-ui <- fluidPage(
+ui <- fluidPage(theme = shinytheme("flatly"),
   navbarPage(
     title = "ST558 Final Project",
     id = "navbar",
@@ -67,14 +82,20 @@ ui <- fluidPage(
              ),
     tabPanel("Data", 
     tabsetPanel(
-             tabPanel("Data Plots",
+             tabPanel("Data Plots & Tables",
                       tabsetPanel(
                         tabPanel("Categorical",
-                                 "TEXT ABOUT STUFF",
+                                 "This tab displays a categoricl data plot and
+                                  contingency tables.",
                                  div(style = "display: flex;",
+                                     radioButtons("CatPlotType",
+                                                 label = "Choose Plot Type:",
+                                                 choices = c("Barchart", "Box-Plot"),
+                                                 selected = "Barchart"),
                                      selectInput("CatVariable",
-                                                 label="Choose Variable for Barchart and Table:",
-                                                 choices = c("Position", "PositionGroup"),
+                                                 label="Choose Variable for Plot:",
+                                                 choices = c("Position", "PositionGroup",
+                                                             "AgeCategorical"),
                                                  selected = "Position"
                                      ), 
                                      sliderInput(
@@ -91,9 +112,61 @@ ui <- fluidPage(
                                      )
                                  ),
                             plotOutput("catPlot"),
-                            textOutput("catText")),
-                        tabPanel("Quantitative", "Scatter") 
-                      )),
+                            "Contingency Tables:",
+                            div(style = "display: flex;",
+                            selectInput("Row", "Select Row Variable", 
+                                        choices = c("Year","AgeCategorical",
+                                                    "Position", "PositionGroup"),
+                                        selected = "Position"),
+                            selectInput("Column", "Select Column Variable", 
+                                        choices = c("Year","AgeCategorical",
+                                                    "Position", "PositionGroup"),
+                                        selected = "Year")
+                            ),
+                            tableOutput("catTable")),
+                        
+                        tabPanel("Quantitative", "Scatter",
+                                 div(style = "display: flex;",
+                                     radioButtons("QuantPlotType",
+                                                  label = "Choose Plot Type:",
+                                                  choices = c("Density",
+                                                              "Histogram",
+                                                              "Scatterplot"),
+                                                  selected = "Density"), 
+                                     sliderInput(
+                                       inputId = "yearsQuant",
+                                       label = "Year Range:",
+                                       value = c(2015,2023),
+                                       min   = 2015,
+                                       max   = 2023,
+                                       step  = 1,
+                                       sep   = '',
+                                       ticks = FALSE,
+                                       round = 0,
+                                       dragRange = FALSE
+                                     ),
+                                     selectInput("QuantX",
+                                                 label = "Choose Variable (X) to Plot:",
+                                                 choices = colnames(dataset 
+                                                                    %>%  select(where(is.numeric)) 
+                                                                    %>% select(-year, -player_id)),
+                                                 selected = "home_run"),
+                            conditionalPanel(condition = "input.QuantPlotType == 'Scatterplot'",
+                                             selectInput("QuantY", 
+                                                           "Choose Y-Variable to Plot:",
+                                                           choices = colnames(dataset 
+                                                                              %>%  select(where(is.numeric)) 
+                                                                              %>% select(-year, -player_id)),
+                                                           selected = "xba"
+                                                           )),
+                            conditionalPanel(condition = "input.QuantPlotType == 'Scatterplot'",
+                                             checkboxInput("color", 
+                                                           "Color by Position Group?"))
+                            
+                                  ),
+                                 plotOutput("QuantPlot")
+                                )
+                        )),
              tabPanel("Data Summaries", 
                       "
                       This tab holds
@@ -150,57 +223,226 @@ ui <- fluidPage(
 # Server
 server <- function(input, output, session) {
   # Initial Data Read
+  
   dataset <- read_csv("BaseballSavant.csv") %>%
     rename("age" = "player_age",
            "fullName" = `last_name, first_name`) %>%
     mutate(PositionGroup =
              case_when(position %in% c('C', '1B', '2B', '3B', 'SS') ~ "Infield",
                        position %in% c('LF', 'CF', 'RF') ~ "Outfield",
-                       position %in% c('DH') ~ "Designated Hitter"))
-
+                       position %in% c('DH') ~ "Designated Hitter"),
+           AgeCategorical =
+             case_when(age < 26 ~ "25 or younger",
+                       age >= 26 & age < 31 ~ "Between 26-30",
+                       age >= 31 & age < 36 ~ "Between 31-35",
+                       age >= 36 ~ "36 or older"))
+  
+  dataset$position <- factor(dataset$position, 
+                             levels = c("C", "1B", "2B", "3B", "SS",
+                                        "LF", "CF", "RF", "DH"))
+  
+  dataset$PositionGroup <- factor(dataset$PositionGroup, 
+                                  levels = c("Infield", "Outfield", "Designated Hitter"))
+  
+  dataset$AgeCategorical <- factor(dataset$AgeCategorical, 
+                                  levels = c("25 or younger", "Between 26-30",
+                                             "Between 31-35", "36 or older"))
+  
   ############
   # DATA TAB #
   ############
   
   ### CATEGORICAL DATA
-  # CatVariable
   filteredDataCat <- reactive({
     dataset %>%
-      filter(year >= input$yearsCat[1] & year <= input$yearsCat[2])
+      filter(year >= input$yearsCat[1] & year <= input$yearsCat[2]) %>%
+      rename("Year" = "year",
+             "Position" = "position")
   })
   
-  output$catText <- renderText(
+  output$catTable <- renderTable({
+    rowname <- input$Row
+    colname <- input$Column
     
+      table <- table(
+        # Row Name
+        factor(filteredDataCat()[[rowname]]),
+        # Column Name
+        factor(filteredDataCat()[[colname]]))
+      
+      as.data.frame.matrix(table)
+  }, include.rownames = TRUE
   )
   
   output$catPlot <- renderPlot(
+  if(input$CatPlotType == "Barchart"){
     
-    if(input$CatVariable == "PositionGroup"){
-    ggplot(filteredDataCat(),
-           aes(
-             x=factor(PositionGroup, levels = c("Infield", "Outfield",
-                                                "Designated Hitter"))
-           )) + 
-      geom_bar(fill ="#377EB8", color = "black") +
-      ylab("Total Count") +
-      xlab("Position Group") +
-      theme_classic()
-    }else{
-    ggplot(filteredDataCat(),
-           aes(
-             x=factor(position, levels = c("C", "1B", "2B", "3B", "SS",
-                                           "LF", "CF", "RF", "DH"))
-           )) + 
-      geom_bar(fill ="#377EB8", color = "black") +
-      ylab("Total Count") +
-      xlab("Position") +
+      if(input$CatVariable == "PositionGroup"){
+      ggplot(filteredDataCat(),
+             aes(
+               x=factor(PositionGroup)
+             )) + 
+        geom_bar(fill ="#377EB8", color = "black") +
+        ylab("Total Count") +
+        xlab("Position Group") +
         theme_classic() +
+          theme(axis.text.x = element_text(size = 15),
+                axis.text.y = element_text(size = 15),
+                axis.title.y = element_text(size = 15),
+                axis.title.x = element_text(size = 15))
+        
+      }else if(input$CatVariable == "Position"){
+      ggplot(filteredDataCat(),
+             aes(
+               x=factor(Position)
+             )) + 
+        geom_bar(fill ="#377EB8", color = "black") +
+        ylab("Total Count") +
+        xlab("Position") +
+          theme_classic() +
+          theme(axis.text.x = element_text(size = 15),
+                axis.text.y = element_text(size = 15),
+                axis.title.y = element_text(size = 15),
+                axis.title.x = element_text(size = 15))
+      }else{
+        ggplot(filteredDataCat(),
+               aes(
+                 x=factor(AgeCategorical)
+               )) + 
+          geom_bar(fill ="#377EB8", color = "black") +
+          ylab("Total Count") +
+          xlab("Position") +
+          theme_classic() +
+          theme(axis.text.x = element_text(size = 15),
+                axis.text.y = element_text(size = 15),
+                axis.title.y = element_text(size = 15),
+                axis.title.x = element_text(size = 15))
+        }
+    }else{
+      
+      if(input$CatVariable == "PositionGroup"){
+        ggplot(filteredDataCat(),
+               aes(
+                 x=factor(PositionGroup),
+                 y=home_run
+               )) + 
+          geom_boxplot(fill ="#377EB8", color = "black") +
+          ylab("Home Runs") +
+          xlab("Position Group") +
+          theme_classic() +
+          theme(axis.text.x = element_text(size = 15),
+                axis.text.y = element_text(size = 15),
+                axis.title.y = element_text(size = 15),
+                axis.title.x = element_text(size = 15))
+        
+      }else if(input$CatVariable == "Position"){
+        ggplot(filteredDataCat(),
+               aes(
+                 x=factor(Position),
+                 y=home_run
+               )) + 
+          geom_boxplot(fill ="#377EB8", color = "black") +
+          ylab("Home Runs") +
+          xlab("Position") +
+          theme_classic() +
+          theme(axis.text.x = element_text(size = 15),
+                axis.text.y = element_text(size = 15),
+                axis.title.y = element_text(size = 15),
+                axis.title.x = element_text(size = 15))
+      }else{
+        ggplot(filteredDataCat(),
+               aes(
+                 x=factor(AgeCategorical),
+                 y=home_run
+               )) + 
+          geom_boxplot(fill ="#377EB8", color = "black") +
+          ylab("Home Runs") +
+          xlab("Age Grouping") +
+          theme_classic() +
+          theme(axis.text.x = element_text(size = 15),
+                axis.text.y = element_text(size = 15),
+                axis.title.y = element_text(size = 15),
+                axis.title.x = element_text(size = 15))
+      }
+    }
+  )
+  
+  ### QUANTITATIVE PLOTS
+  filteredDataQuant <- reactive({
+    dataset %>%
+      filter(year >= input$yearsQuant[1] & year <= input$yearsQuant[2]) %>%
+      rename("Year" = "year",
+             "Position" = "position")
+  })
+  
+  output$QuantPlot <- renderPlot({
+  
+    XvarChoice <- (input$QuantX)
+    YvarChoice <- (input$QuantY)
+    plotChoice <- input$QuantPlotType  
+    
+  if(plotChoice == "Histogram"){
+    # Histogram
+    ggplot(filteredDataQuant(), aes_string(x=XvarChoice)) + 
+      geom_histogram(bins=10, 
+                     fill = "#377EB8", 
+                     color = "black") + # choose density or histogram
+      theme_classic() +
+      ylab("Count") +
+      theme(axis.text.x = element_text(size = 15),
+            axis.text.y = element_text(size = 15),
+            axis.title.y = element_text(size = 15),
+            axis.title.x = element_text(size = 15))
+    
+  }else if(plotChoice == "Density"){
+    # Density Plot
+    ggplot(filteredDataQuant(), aes_string(x=XvarChoice)) + 
+      geom_density(fill = "#377EB8") + # choose density or histogram
+      theme_classic()  +
+      ylab("Density") +
+      theme(axis.text.x = element_text(size = 15),
+            axis.text.y = element_text(size = 15),
+            axis.title.y = element_text(size = 15),
+            axis.title.x = element_text(size = 15),
+            legend.text = element_text(size = 10))
+    
+  }else{
+    # Scatterplot
+    if(input$color == FALSE){
+    ggplot(filteredDataQuant(),
+           aes_string(x=XvarChoice, # INPUT var
+               y=YvarChoice
+           )) +
+      scale_color_brewer(palette = "Set1") +
+      geom_point() +
+      theme_bw()  +
+      theme(axis.text.x = element_text(size = 15),
+            axis.text.y = element_text(size = 15),
+            axis.title.y = element_text(size = 15),
+            axis.title.x = element_text(size = 15),
+            legend.text = element_text(size = 15),
+            legend.title = element_text(size = 15))
+    }else{
+      color <- "PositionGroup"
+      
+      ggplot(filteredDataQuant(),
+             aes_string(x=XvarChoice, # INPUT var
+                        y=YvarChoice,
+                        color = color
+             )) +
+        scale_color_brewer(palette = "Set1") +
+        geom_point() +
+        theme_bw()  +
         theme(axis.text.x = element_text(size = 15),
               axis.text.y = element_text(size = 15),
               axis.title.y = element_text(size = 15),
-              axis.title.x = element_text(size = 15))
+              axis.title.x = element_text(size = 15),
+              legend.text = element_text(size = 15),
+              legend.title = element_text(size = 15))
     }
-  )
+  }
+    
+  })
   
   ### DATA SUMMARIES
   filteredData <- reactive({
