@@ -17,7 +17,29 @@ ctrl <- trainControl(method = "cv", classProbs = TRUE ,number = 5,
                      summaryFunction = mnLogLoss)
 
 # Model 1, all variables
-logistic_model_1 <- train(Diabetes_binary ~ HighBP + HighChol + BMI + PhysActivity + 
-                            Fruits + Veggies + Sex + Age + Smoker + Stroke, 
-                          data = train, method = "glm", family = "binomial", 
-                          trControl = ctrl, metric = "logLoss")
+
+
+
+splitPct <- 59/100
+trainingIndex <- createDataPartition(dataset$HomeRuns, 
+                                     p = splitPct, 
+                                     list=FALSE)
+train <- dataset[trainingIndex,]
+test <- dataset[-trainingIndex,]
+
+# Cross Validation options
+### Specifically for RF
+ctrl <- trainControl(method = "cv", 
+                     number = 3)
+
+grid <- expand.grid(mtry = 5:6)
+
+# Random Forest
+model1 <- train(
+  HomeRuns ~ Age + Singles + Doubles + Triples + xBA + xIso + LineDrivePct,
+  data = train,
+  trControl = ctrl,
+  method = "rf",
+  tuneGrid = grid,
+  ntree = 1
+)
