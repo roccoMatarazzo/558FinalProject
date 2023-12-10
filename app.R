@@ -74,12 +74,13 @@ ui <- fluidPage(
       Data Science with R, taught at North Carolina State University."),
     
     p("This app explores baseball data from the website Baseball Savant.
-      The general goal of this app is to predict a player's Home Run total using a variety of statistics.
+      The general goal of this app is to predict a player's Home Run total for a season using a variety of statistics.
       Home Runs are when a player scores themselves on their own batted ball, which most often occurs when 
       the ball is hit over the fence within fair territory. The dataset used in this app contains
       1245 total observations from Major League Baseball spanning the 2015 to 2023 seasons. Basic variables within the dataset 
       include a player's age and position. Advanced variables include xSLG (expected 
-      Slugging Percentage), Avg. Exit Velocity, and more. 
+      Slugging Percentage), Avg. Exit Velocity, and more. All of this data is on a season level. For example, Shohei Ohtani's
+      Average Exit Velocity of 94.4 for the 2023 season is an average of all of his recorded exit velocities over the course of that season.
       
       
       The data source website, Baseball Savant, followed by a detailed glossary, are linked
@@ -95,8 +96,8 @@ ui <- fluidPage(
       any model fitting! Moreover, this tab should familiarize you with the data and help you 
       prepare to choose variables for the Modeling tab."),
     p("The Modeling tab contains three subtabs. The inital subtab, Modeling Info,
-      will share details about the two models we are using: a multiple linear regression model and
-      random forest model. The Model Fitting tab will allow the user to directly choose parameters that
+      will share details about the two models we are using: a Generalized Linear Model and
+      Random Forest model. The Model Fitting tab will allow the user to directly choose parameters that
       effect the models and their interpratation. These parameters include the training/testing split,
       variables for each model, and tuning parameters among other options. 
       Finally, users can use the final subtab, Prediction, to predict the number of Home Runs for each
@@ -258,24 +259,37 @@ ui <- fluidPage(
       tabsetPanel(
         id = "subtabs",
         tabPanel("Modeling Info", 
-                 "There will be two types of models fit on our data -- a multiple linear
-                 regression model and a random forest model.
-                 
-                 The benefits of the random forest model are
-                 The drawbacks of the random forest model are
-                 The benefits of the multiple linear regression model are
-                 The drawbacks of the multiple linear regression model are
-                 
-                 Insert some mathJax
-                 ",
-                 "Content for Subtab 1"),
-        
+                 p("There will be two types of models fit on our data -- a Generalized Linear
+                Model (GLM) and a Random Forest (RF) model. The reason we're moving forward with
+                 a GLM rather than a more standard Multiple Ordinary Least Squares model is that the response variable is not normally 
+                 distributed. When running the Shapiro-Wilk Test, the data resulted in an incredibly low p-value,
+                 indicating that there is significant evidence to suggest that HomeRuns follows a 
+                 non-normal distibution. Therefore, we are treating this as a Poisson distribution. 
+                   Poisson distributions count the number of occurences in a given time interval. Here we are trying to predict
+                   the number of Home Runs (count) in a given season (time interval) for a player. "),
+                 p("The specialty of GLMs is that they each have a unique link function. The link function for the Poisson is log.
+                 The link function determines the relationship between the linear predictors 
+                 and the mean of the distribution, which is Lamda for Poisson.
+                   "),
+                 withMathJax(),
+                 uiOutput('explanation'),
+                 p("A benefit of a Genearlized Linear Model is that it allows for responses from
+                   non-normal distributions, like in our case. It is also easy to interpret, specifically in
+                   comparison to a Random Forest. 
+                   Some drawbacks of GLMs include that they aresensitve to outlier data and predictor variables should be uncorrelated
+                   (can run into issues if a model involves multicollinearity). In comparison
+                   to a Random Forest, a GLM lacks built-in variable selection. A benefit of a Random Forest is that 
+                   it generally bodes well for prediction. RFs also have built in variable selection and are applicable to many types of problems. 
+                   Along with the aforementioned interpretability issue, Random Forests are built
+                   using a 'greedy algorithm' which is not always efficient, and can be 
+                   computationally expensive."),
+                 ),
         tabPanel("Model Fitting",
         sidebarPanel(
         sliderInput("splitPct", "Percentage for Test/Train Split:", value = 70, min = 1, max = 99),
         selectInput("model1", "Select Predictor Variables for Random Forest:", 
                     choices = colnames(dataset %>% select(-HomeRuns, -FullName, -player_id, -HomeToFirstTime)), multiple = TRUE),
-        selectInput("model2", "Select Predictor Variables for Multiple Linear Regression:", 
+        selectInput("model2", "Select Predictor Variables for Generalized Linear Regression:", 
                     choices = colnames(dataset %>% select(-HomeRuns, -FullName, -player_id, -HomeToFirstTime)), multiple = TRUE),
         sliderInput("ntree", "Number of Trees for Random Forest:", min = 1, max = 1000, value = 100),
         sliderInput("folds", "Number of Cross-Validation Folds for Random Forest:",
@@ -291,7 +305,9 @@ ui <- fluidPage(
         ),
         mainPanel(
           p("These outputs will display the loading graphic until the button 'Fit Both Models' is pressed."),
-          p("Fit Statistics for Training and Testing Data are below:"),
+          p("Fit Statistics for Training and Testing Data are below. Note the deviance in
+            the summary table bewlo the plot as it is important for Poisson distributions. We
+            hope that Residual Deviance/1  is approximately equal to 1."),
           withSpinner(DT::dataTableOutput("fitStats"), type = 1),
           p("The summaries for each model are shown below. The Random 
           Forest Variable Importance plot is printed first,
@@ -338,12 +354,12 @@ ui <- fluidPage(
                      AgeCategorical's levels are '25 or younger', 'Between 26-30', 'Between 31-35', '36 or older'."),
                    p("As a reminder, below are the models you've selected for the Random Forest Model:"),
                    verbatimTextOutput("model1_vars_selected"),
-                   p("As a reminder, below are the models you've selected for the Multiple Linear Regression Model:"),
+                   p("As a reminder, below are the models you've selected for the Generalized Linear Regression Model:"),
                    verbatimTextOutput("model2_vars_selected"),
                    p("The following two sentences will further populate once you have pressed the 'Make Prediction!' button."),   
                    p("Your Random Forest Model returns the following,"),
                    verbatimTextOutput("model1Outcome"),
-                   p("Your Multiple Linear Regression Model returns the following,"),
+                   p("Your Generalized Linear Regression Model returns the following,"),
                    verbatimTextOutput("model2Outcome")
                  )
               )
@@ -516,6 +532,13 @@ server <- function(input, output, session) {
       }
     }
   )
+  
+  output$explanation <- renderUI({
+    withMathJax(
+      helpText('The link function for the Poisson
+    $$X\\beta = \\ln(\\mu)$$')
+    )
+  })
   
   ### QUANTITATIVE PLOTS
   filteredDataQuant <- reactive({
@@ -697,9 +720,6 @@ server <- function(input, output, session) {
      
      grid <- expand.grid(mtry = input$grid[1]:input$grid[2])
      
-     ctrlMLR <- trainControl(method = "cv", 
-                          number = 3)
-     
      # Random Forest
      model_1 <- train(
        as.formula(paste("HomeRuns ~ ", paste(input$model1, collapse = "+"))),
@@ -711,13 +731,12 @@ server <- function(input, output, session) {
      )
      fitted_Model1(model_1)
      
-     # Multiple Linear Regression
-     model_2 <- train(
+     # Generalized Linear Regression
+     model_2 <- glm(
        as.formula(paste("HomeRuns ~ ", paste(input$model2, collapse = "+"))),
        data = train,
-       trControl = ctrlMLR,
-       method = "lm"
-     )
+       family = "poisson"
+         )
      fitted_Model2(model_2)
      
      
@@ -728,14 +747,14 @@ server <- function(input, output, session) {
      testPredictsModel1 <- predict(fitted_Model1(), newdata = test)
      RMSE_TestRF <- RMSE(testPredictsModel1, test$HomeRuns)
      
-     trainPredictsModel2 <- predict(fitted_Model2(), newdata = train)
-     RMSE_TrainMLR <- RMSE(trainPredictsModel2, train$HomeRuns)
+     trainPredictsModel2 <- predict(fitted_Model2(), newdata = train, type = "res[pmse")
+     RMSE_TrainGLM <- RMSE(trainPredictsModel2, train$HomeRuns)
      
-     testPredictsModel2 <- predict(fitted_Model2(), newdata = test)
-     RMSE_TestMLR <- RMSE(testPredictsModel2, test$HomeRuns)
+     testPredictsModel2 <- predict(fitted_Model2(), newdata = test, type = "response")
+     RMSE_TestGLM <- RMSE(testPredictsModel2, test$HomeRuns)
      
      RMSE_Table <- cbind(RMSE_TrainRF, RMSE_TestRF,
-           RMSE_TrainMLR, RMSE_TestMLR)
+           RMSE_TrainGLM, RMSE_TestGLM)
      
      output$fitStats <- renderDataTable({
         datatable(
@@ -817,7 +836,7 @@ server <- function(input, output, session) {
   observeEvent(input$predictButton, {
     
   model1_Prediction <- predict(fitted_Model1(), pred_df())
-  model2_Prediction <- predict(fitted_Model2(), pred_df())
+  model2_Prediction <- predict(fitted_Model2(), pred_df(), type = "response")
   
   output$model1Outcome <- renderPrint({
     
