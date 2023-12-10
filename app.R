@@ -7,6 +7,7 @@ library(tidyverse)
 library(RColorBrewer)
 library(shinythemes)
 library(shinycssloaders)
+library(randomForest)
 
 # Dataset set up
 dataset <- read_csv("BaseballSavant.csv") %>%
