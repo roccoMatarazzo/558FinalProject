@@ -288,8 +288,9 @@ ui <- fluidPage(
                                       min = 2, max = 15, value = 5),
                           p("Recall mtry is the number of variables to randomly select.
           Therefore, make sure you select a number of variables
-          greater than or equal to your mtry value."),
-                          sliderInput("grid", "Grid Parameters (mtry) for Random Forest:",
+          greater than or equal to your mtry range. For example, if you range from 5 to 7, make sure at least 
+                            7 variables are selected."),
+                          sliderInput("grid", "Grid Parameter Range (mtry) for Random Forest:",
                                       min = 5, max = 20, value = c(5,10), sep = 1),
                           p("Make sure you have variables selected before you fit your model!
           If not, you will get an error!"),
