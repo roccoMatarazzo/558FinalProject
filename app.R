@@ -1,12 +1,5 @@
 # Running app code:
 # shiny::runGitHub(repo = "558FinalProject", username = "RoccoMatarazzo", ref="main")
-
-
-
-
-
-### DO NOT FORGET TO UPDATE YOUR README.MD FILE! ! ! ! ! ! ! 
-
 library(caret)
 library(DT)
 library(shiny)
@@ -14,7 +7,6 @@ library(tidyverse)
 library(RColorBrewer)
 library(shinythemes)
 library(shinycssloaders)
-library(ggpubr)
 
 # Dataset set up
 dataset <- read_csv("BaseballSavant.csv") %>%
@@ -40,7 +32,7 @@ dataset <- read_csv("BaseballSavant.csv") %>%
          "InZonePct" = "in_zone_percent",
          "LineDrivePct" = "linedrives_percent",
          "HomeToFirstTime" = "hp_to_1b"
-         ) %>%
+  ) %>%
   mutate(PositionGroup =
            case_when(Position %in% c('C', '1B', '2B', '3B', 'SS') ~ "Infield",
                      Position %in% c('LF', 'CF', 'RF') ~ "Outfield",
@@ -60,8 +52,8 @@ dataset$PositionGroup <- factor(dataset$PositionGroup,
                                 levels = c("Infield", "Outfield", "Designated Hitter"))
 
 dataset$AgeCategorical <- factor(dataset$AgeCategorical, 
-                                levels = c("25 or younger", "Between 26-30",
-                                           "Between 31-35", "36 or older"))
+                                 levels = c("25 or younger", "Between 26-30",
+                                            "Between 31-35", "36 or older"))
 # UI
 ui <- fluidPage(
   theme = shinytheme("flatly"),
@@ -69,11 +61,11 @@ ui <- fluidPage(
     title = "ST558 Final Project",
     id = "navbar",
     tabPanel("About", 
-    # Brief Intro
-    p("This Shiny App is a culmination of the Master's Course ST558,
+             # Brief Intro
+             p("This Shiny App is a culmination of the Master's Course ST558,
       Data Science with R, taught at North Carolina State University."),
-    
-    p("This app explores baseball data from the website Baseball Savant.
+             
+             p("This app explores baseball data from the website Baseball Savant.
       The general goal of this app is to predict a player's Home Run total for a season using a variety of statistics.
       Home Runs are when a player scores themselves on their own batted ball, which most often occurs when 
       the ball is hit over the fence within fair territory. The dataset used in this app contains
@@ -85,136 +77,136 @@ ui <- fluidPage(
       
       The data source website, Baseball Savant, followed by a detailed glossary, are linked
       at the bottom of this tab."),
-    # Data Explanation
-    
-    # Tab Explanation
-    p("The Data Exploration tab will allow the user to explore nummerical and
+             # Data Explanation
+             
+             # Tab Explanation
+             p("The Data Exploration tab will allow the user to explore nummerical and
       categorical summaries of the supplied data. Functionality includes the ability
       to plot data, view the data in dataTable format, and view the correlation between particular variables.
       The user should use this tab to identify patterns and relationships within the dataset. This tab 
       essentially serves as the 'EDA' part of an analysis, which should always be done prior to doing
       any model fitting! Moreover, this tab should familiarize you with the data and help you 
       prepare to choose variables for the Modeling tab."),
-    p("The Modeling tab contains three subtabs. The inital subtab, Modeling Info,
+             p("The Modeling tab contains three subtabs. The inital subtab, Modeling Info,
       will share details about the two models we are using: a Generalized Linear Model and
       Random Forest model. The Model Fitting tab will allow the user to directly choose parameters that
       effect the models and their interpratation. These parameters include the training/testing split,
       variables for each model, and tuning parameters among other options. 
       Finally, users can use the final subtab, Prediction, to predict the number of Home Runs for each
       of their fit models by entering values for the variables they chose."),
-  
-    p(""),
-    img(src ="spraychart.png", align = "left", height = "300px"),
-    img(src = "aaronJudge.jpg", height = "300px"),
-    #,img(src = "baseballSavant.jpg", height = "300px")
-    
-    p(""),
-    a("https://baseballsavant.mlb.com/"),
-    p(""),
-    a("https://baseballsavant.mlb.com/csv-docs")
-             ),
+             
+             p(""),
+             img(src ="spraychart.png", align = "left", height = "300px"),
+             img(src = "aaronJudge.jpg", height = "300px"),
+             #,img(src = "baseballSavant.jpg", height = "300px")
+             
+             p(""),
+             a("https://baseballsavant.mlb.com/"),
+             p(""),
+             a("https://baseballsavant.mlb.com/csv-docs")
+    ),
     tabPanel("Data", 
-    tabsetPanel(
-             tabPanel("Data Plots & Tables",
-                      tabsetPanel(
-                        tabPanel("Categorical",
-                                 p("This tab displays a categorical data plot of choice and
+             tabsetPanel(
+               tabPanel("Data Plots & Tables",
+                        tabsetPanel(
+                          tabPanel("Categorical",
+                                   p("This tab displays a categorical data plot of choice and
                                   contingency tables. The vertical axis is fixed
                                  to the y-variable of interest, Home Runs, for the Box-Plot."),
-                                 div(style = "display: flex;",
-                                     radioButtons("CatPlotType",
-                                                 label = "Choose Plot Type:",
-                                                 choices = c("Barchart", "Box-Plot"),
-                                                 selected = "Barchart"),
-                                     selectInput("CatVariable",
-                                                 label="Choose Variable for Plot:",
-                                                 choices = c("Position", "PositionGroup",
-                                                             "AgeCategorical"),
-                                                 selected = "Position"
-                                     ), 
-                                     sliderInput(
-                                       inputId = "yearsCat",
-                                       label = "Year Range:",
-                                       value = c(2015,2023),
-                                       min   = 2015,
-                                       max   = 2023,
-                                       step  = 1,
-                                       sep   = '',
-                                       ticks = FALSE,
-                                       round = 0,
-                                       dragRange = FALSE
-                                     )
-                                 ),
-                            plotOutput("catPlot"),
-                            p("Contingency Tables:"),
-                            div(style = "display: flex;",
-                            selectInput("Row", "Select Row Variable", 
-                                        choices = c("Year","AgeCategorical",
-                                                    "Position", "PositionGroup"),
-                                        selected = "Position"),
-                            selectInput("Column", "Select Column Variable", 
-                                        choices = c("Year","AgeCategorical",
-                                                    "Position", "PositionGroup"),
-                                        selected = "Year")
-                            ),
-                            tableOutput("catTable")),
-                        
-                        tabPanel("Quantitative", 
-                                 p("This tab displays a quantitative plot of choice.
+                                   div(style = "display: flex;",
+                                       radioButtons("CatPlotType",
+                                                    label = "Choose Plot Type:",
+                                                    choices = c("Barchart", "Box-Plot"),
+                                                    selected = "Barchart"),
+                                       selectInput("CatVariable",
+                                                   label="Choose Variable for Plot:",
+                                                   choices = c("Position", "PositionGroup",
+                                                               "AgeCategorical"),
+                                                   selected = "Position"
+                                       ), 
+                                       sliderInput(
+                                         inputId = "yearsCat",
+                                         label = "Year Range:",
+                                         value = c(2015,2023),
+                                         min   = 2015,
+                                         max   = 2023,
+                                         step  = 1,
+                                         sep   = '',
+                                         ticks = FALSE,
+                                         round = 0,
+                                         dragRange = FALSE
+                                       )
+                                   ),
+                                   plotOutput("catPlot"),
+                                   p("Contingency Tables:"),
+                                   div(style = "display: flex;",
+                                       selectInput("Row", "Select Row Variable", 
+                                                   choices = c("Year","AgeCategorical",
+                                                               "Position", "PositionGroup"),
+                                                   selected = "Position"),
+                                       selectInput("Column", "Select Column Variable", 
+                                                   choices = c("Year","AgeCategorical",
+                                                               "Position", "PositionGroup"),
+                                                   selected = "Year")
+                                   ),
+                                   tableOutput("catTable")),
+                          
+                          tabPanel("Quantitative", 
+                                   p("This tab displays a quantitative plot of choice.
                                    Once the scatterplot option is chosen, the correlation
                                    between the two variables of choice will be displayed at
                                    the bottom of the page. Also, an option to color by 
                                    a particular group is available with the scatterplot."),
-                                 div(style = "display: flex;",
-                                     radioButtons("QuantPlotType",
-                                                  label = "Choose Plot Type:",
-                                                  choices = c("Density",
-                                                              "Histogram",
-                                                              "Scatterplot"),
-                                                  selected = "Density"), 
-                                     sliderInput(
-                                       inputId = "yearsQuant",
-                                       label = "Year Range:",
-                                       value = c(2015,2023),
-                                       min   = 2015,
-                                       max   = 2023,
-                                       step  = 1,
-                                       sep   = '',
-                                       ticks = FALSE,
-                                       round = 0,
-                                       dragRange = FALSE
-                                     ),
-                                     selectInput("QuantX",
-                                                 label = "Choose X-Variable to Plot:",
-                                                 choices = colnames(dataset 
-                                                                    %>%  select(where(is.numeric)) 
-                                                                    %>% select(-Year, -player_id, -HomeToFirstTime)),
-                                                 selected = "HomeRuns"),
-                            conditionalPanel(condition = "input.QuantPlotType == 'Scatterplot'",
-                                             selectInput("QuantY", 
-                                                           "Choose Y-Variable to Plot:",
-                                                           choices = colnames(dataset 
-                                                                              %>%  select(where(is.numeric)) 
-                                                                              %>% select(-Year, -player_id, -HomeToFirstTime)),
-                                                           selected = "HardHitPct"
-                                                           )),
-                            conditionalPanel(condition = "input.QuantPlotType == 'Scatterplot'",
-                                             selectInput("color", 
-                                                           "Color by Group?",
-                                                         choices = c("No",
-                                                                     "Yes - PositionGroup",
-                                                                     "Yes - Position",
-                                                                     "Yes - AgeCategorical"),
-                                                         selected = "PositionGroup"))
-                            
-                                  ),
-                                 plotOutput("QuantPlot")
-                            ,conditionalPanel(condition = "input.QuantPlotType == 'Scatterplot'",
-                                              verbatimTextOutput("correlation"))
-                                 )
+                                   div(style = "display: flex;",
+                                       radioButtons("QuantPlotType",
+                                                    label = "Choose Plot Type:",
+                                                    choices = c("Density",
+                                                                "Histogram",
+                                                                "Scatterplot"),
+                                                    selected = "Density"), 
+                                       sliderInput(
+                                         inputId = "yearsQuant",
+                                         label = "Year Range:",
+                                         value = c(2015,2023),
+                                         min   = 2015,
+                                         max   = 2023,
+                                         step  = 1,
+                                         sep   = '',
+                                         ticks = FALSE,
+                                         round = 0,
+                                         dragRange = FALSE
+                                       ),
+                                       selectInput("QuantX",
+                                                   label = "Choose X-Variable to Plot:",
+                                                   choices = colnames(dataset 
+                                                                      %>%  select(where(is.numeric)) 
+                                                                      %>% select(-Year, -player_id, -HomeToFirstTime)),
+                                                   selected = "HomeRuns"),
+                                       conditionalPanel(condition = "input.QuantPlotType == 'Scatterplot'",
+                                                        selectInput("QuantY", 
+                                                                    "Choose Y-Variable to Plot:",
+                                                                    choices = colnames(dataset 
+                                                                                       %>%  select(where(is.numeric)) 
+                                                                                       %>% select(-Year, -player_id, -HomeToFirstTime)),
+                                                                    selected = "HardHitPct"
+                                                        )),
+                                       conditionalPanel(condition = "input.QuantPlotType == 'Scatterplot'",
+                                                        selectInput("color", 
+                                                                    "Color by Group?",
+                                                                    choices = c("No",
+                                                                                "Yes - PositionGroup",
+                                                                                "Yes - Position",
+                                                                                "Yes - AgeCategorical"),
+                                                                    selected = "PositionGroup"))
+                                       
+                                   ),
+                                   plotOutput("QuantPlot")
+                                   ,conditionalPanel(condition = "input.QuantPlotType == 'Scatterplot'",
+                                                     verbatimTextOutput("correlation"))
+                          )
                         )),
-             tabPanel("Numerical Data Summaries", 
-                      "
+               tabPanel("Numerical Data Summaries", 
+                        "
                       This tab holds
                       important nummerical summary values
                       as well as a basic data table.
@@ -223,43 +215,43 @@ ui <- fluidPage(
                       The top table will display the numerical summary
                       for the variable selected in the drop down menu.
                       ",
-                      
-                      div(style = "display: flex;",
-                          selectInput("summaryType",
-                                      label="Choose Type of Summary:",
-                                      choices = c("All","Min","Max","Mean", "Median",
-                                                  "Variance", "Std. Dev.", "IQR"),
-                                      selected = "All"
-                          ),
-                          selectInput("varSumChoice",
-                                      label="Choose Variable for Numerical Summary:",
-                                      choices = colnames(dataset 
-                                                         %>%  select(where(is.numeric)) 
-                                                         %>% select(-Year, -player_id, -HomeToFirstTime)),
-                                      selected = "age"
-                          ), 
-                          sliderInput(
-                            inputId = "years",
-                            label = "Year Range:",
-                            value = c(2015,2023),
-                            min   = 2015,
-                            max   = 2023,
-                            step  = 1,
-                            sep   = '',
-                            ticks = FALSE,
-                            round = 0,
-                            dragRange = FALSE
-                          )
-                      ),
-                      DT::dataTableOutput("mendedSummary"),
-                      DT::dataTableOutput("dataTableSummary"))
-            )
-           ),
+                        
+                        div(style = "display: flex;",
+                            selectInput("summaryType",
+                                        label="Choose Type of Summary:",
+                                        choices = c("All","Min","Max","Mean", "Median",
+                                                    "Variance", "Std. Dev.", "IQR"),
+                                        selected = "All"
+                            ),
+                            selectInput("varSumChoice",
+                                        label="Choose Variable for Numerical Summary:",
+                                        choices = colnames(dataset 
+                                                           %>%  select(where(is.numeric)) 
+                                                           %>% select(-Year, -player_id, -HomeToFirstTime)),
+                                        selected = "age"
+                            ), 
+                            sliderInput(
+                              inputId = "years",
+                              label = "Year Range:",
+                              value = c(2015,2023),
+                              min   = 2015,
+                              max   = 2023,
+                              step  = 1,
+                              sep   = '',
+                              ticks = FALSE,
+                              round = 0,
+                              dragRange = FALSE
+                            )
+                        ),
+                        DT::dataTableOutput("mendedSummary"),
+                        DT::dataTableOutput("dataTableSummary"))
+             )
+    ),
     tabPanel("Modeling",
-      tabsetPanel(
-        id = "subtabs",
-        tabPanel("Modeling Info", 
-                 p("There will be two types of models fit on our data -- a Generalized Linear
+             tabsetPanel(
+               id = "subtabs",
+               tabPanel("Modeling Info", 
+                        p("There will be two types of models fit on our data -- a Generalized Linear
                 Model (GLM) and a Random Forest (RF) model. The reason we're moving forward with
                  a GLM rather than a more standard Multiple Ordinary Least Squares model is that the response variable is not normally 
                  distributed. When running the Shapiro-Wilk Test, the data resulted in an incredibly low p-value,
@@ -267,13 +259,13 @@ ui <- fluidPage(
                  non-normal distibution. Therefore, we are treating this as a Poisson distribution. 
                    Poisson distributions count the number of occurences in a given time interval. Here we are trying to predict
                    the number of Home Runs (count) in a given season (time interval) for a player. "),
-                 p("The specialty of GLMs is that they each have a unique link function. The link function for the Poisson is log.
+                        p("The specialty of GLMs is that they each have a unique link function. The link function for the Poisson is log.
                  The link function determines the relationship between the linear predictors 
                  and the mean of the distribution, which is Lamda for Poisson.
                    "),
-                 withMathJax(),
-                 uiOutput('explanation'),
-                 p("A benefit of a Genearlized Linear Model is that it allows for responses from
+                        withMathJax(),
+                        uiOutput('explanation'),
+                        p("A benefit of a Genearlized Linear Model is that it allows for responses from
                    non-normal distributions, like in our case. It is also easy to interpret, specifically in
                    comparison to a Random Forest. 
                    Some drawbacks of GLMs include that they aresensitve to outlier data and predictor variables should be uncorrelated
@@ -283,87 +275,87 @@ ui <- fluidPage(
                    Along with the aforementioned interpretability issue, Random Forests are built
                    using a 'greedy algorithm' which is not always efficient, and can be 
                    computationally expensive."),
-                 ),
-        tabPanel("Model Fitting",
-        sidebarPanel(
-        sliderInput("splitPct", "Percentage for Test/Train Split:", value = 70, min = 1, max = 99),
-        selectInput("model1", "Select Predictor Variables for Random Forest:", 
-                    choices = colnames(dataset %>% select(-HomeRuns, -FullName, -player_id, -HomeToFirstTime)), multiple = TRUE),
-        selectInput("model2", "Select Predictor Variables for Generalized Linear Regression:", 
-                    choices = colnames(dataset %>% select(-HomeRuns, -FullName, -player_id, -HomeToFirstTime)), multiple = TRUE),
-        sliderInput("ntree", "Number of Trees for Random Forest:", min = 1, max = 1000, value = 100),
-        sliderInput("folds", "Number of Cross-Validation Folds for Random Forest:",
-                    min = 2, max = 15, value = 5),
-        p("Recall mtry is the number of variables to randomly select.
+               ),
+               tabPanel("Model Fitting",
+                        sidebarPanel(
+                          sliderInput("splitPct", "Percentage for Test/Train Split:", value = 70, min = 1, max = 99),
+                          selectInput("model1", "Select Predictor Variables for Random Forest:", 
+                                      choices = colnames(dataset %>% select(-HomeRuns, -FullName, -player_id, -HomeToFirstTime)), multiple = TRUE),
+                          selectInput("model2", "Select Predictor Variables for Generalized Linear Regression:", 
+                                      choices = colnames(dataset %>% select(-HomeRuns, -FullName, -player_id, -HomeToFirstTime)), multiple = TRUE),
+                          sliderInput("ntree", "Number of Trees for Random Forest:", min = 1, max = 1000, value = 100),
+                          sliderInput("folds", "Number of Cross-Validation Folds for Random Forest:",
+                                      min = 2, max = 15, value = 5),
+                          p("Recall mtry is the number of variables to randomly select.
           Therefore, make sure you select a number of variables
           greater than or equal to your mtry value."),
-        sliderInput("grid", "Grid Parameters (mtry) for Random Forest:",
-                    min = 5, max = 20, value = c(5,10), sep = 1),
-        p("Make sure you have variables selected before you fit your model!
+                          sliderInput("grid", "Grid Parameters (mtry) for Random Forest:",
+                                      min = 5, max = 20, value = c(5,10), sep = 1),
+                          p("Make sure you have variables selected before you fit your model!
           If not, you will get an error!"),
-        actionButton("modelFitButton", "Fit Both Models")
-        ),
-        mainPanel(
-          p("These outputs will display the loading graphic until the button 'Fit Both Models' is pressed."),
-          p("Fit Statistics for Training and Testing Data are below. Note the deviance in
+                          actionButton("modelFitButton", "Fit Both Models")
+                        ),
+                        mainPanel(
+                          p("These outputs will display the loading graphic until the button 'Fit Both Models' is pressed."),
+                          p("Fit Statistics for Training and Testing Data are below. Note the deviance in
             the summary table bewlo the plot as it is important for Poisson distributions. We
             hope that Residual Deviance/1  is approximately equal to 1."),
-          withSpinner(DT::dataTableOutput("fitStats"), type = 1),
-          p("The summaries for each model are shown below. The Random 
+                          withSpinner(DT::dataTableOutput("fitStats"), type = 1),
+                          p("The summaries for each model are shown below. The Random 
           Forest Variable Importance plot is printed first,
           and the summary from the regression model
           is printed second."),
-          withSpinner(plotOutput("varImp"), type = 1),
-          withSpinner(verbatimTextOutput("modelSummary2"), type = 1)
-        )),
-        tabPanel("Prediction", 
-                 sidebarPanel(
-                   numericInput("PredYear", "Year:", value = round(mean(dataset$Year),3) , min = 0, max = 2023)
-                   ,numericInput("PredAge", "Age:", value = round(mean(dataset$Age),3), min = 0, max = 100)
-                   ,numericInput("PredSingles", "Singles:", value = round(mean(dataset$Singles),3), min = 0, max = 500)
-                   ,numericInput("PredDoubles", "Doubles:", value = round(mean(dataset$Doubles),3), min = 0, max = 500)
-                   ,numericInput("PredTriples", "Triples:", value = round(mean(dataset$Triples),3), min = 0, max = 500)
-                   ,numericInput("PredxBA", "xBA:", value = round(mean(dataset$xBA),3), min = 0, max = 1)
-                   ,numericInput("PredxSLG", "xSLG:", value = round(mean(dataset$xSLG),3), min = 0, max = 1)
-                   ,numericInput("PredxWOBA", "xWOBA:", value = round(mean(dataset$xWOBA),3), min = 0, max = 1)
-                   ,numericInput("PredxOBP", "xOBP:", value = round(mean(dataset$xOBP),3), min = 0, max = 1)
-                   ,numericInput("PredxIso", "xIso:", value = round(mean(dataset$xIso),3), min = 0, max = 1)
-                   ,numericInput("PredxWOBACON", "xWOBACON:", value = round(mean(dataset$xWOBACON),3), min = 0, max = 1)
-                   ,numericInput("PredAvgExitVelo", "AvgExitVelo:", value = round(mean(dataset$AvgExitVelo),3), min = 0, max = 500)
-                   ,numericInput("PredAvgLaunchAngle", "AvgLaunchAngle:", value = round(mean(dataset$AvgLaunchAngle),3), min = 0, max = 500)
-                   ,numericInput("PredBarreledRate", "BarreledRate:", value = round(mean(dataset$BarreledRate),3), min = 0, max = 500)
-                   ,numericInput("PredHardHitPct", "HardHitPct:", value = round(mean(dataset$HardHitPct),3), min = 0, max = 500)
-                   ,numericInput("PredZswingPct", "ZswingPct:", value = round(mean(dataset$ZswingPct),3), min = 0, max = 500)
-                   ,numericInput("PredInZonePct", "InZonePct:", value = round(mean(dataset$InZonePct),3), min = 0, max = 500)
-                   ,numericInput("PredLineDrivePct", "LineDrivePct:", value = round(mean(dataset$LineDrivePct),3), min = 0, max = 500)
-                   ,numericInput("PredTotalHits", "TotalHits:", value = round(mean(dataset$TotalHits),3), min = 0, max = 500)
-                   ,selectInput("PredPositionGroup", "PositionGroup:", choices = c("Infield","Outfield","Designated Hitter"),
-                                                                                  selected = "Infield")
-                   ,selectInput("PredAgeCategorical", "AgeCategorical:", choices = c('25 or younger','Between 26-30','Between 31-35','36 or older'), 
-                                                                                  selected = "25 or younger")
-                   ,selectInput("PredPosition", "Position:", choices = c('C','1B','2B','3B','SS','LF','CF','RF','DH'),  selected = "C"),
-                   actionButton("predictButton", "Make Prediction!")
-                 ),
-                 mainPanel(
-                   p("Prior to using this tab, please ensure you fit an appropriate model on the 'Model Fitting' tab.
+                          withSpinner(plotOutput("varImp"), type = 1),
+                          withSpinner(verbatimTextOutput("modelSummary2"), type = 1)
+                        )),
+               tabPanel("Prediction", 
+                        sidebarPanel(
+                          numericInput("PredYear", "Year:", value = round(mean(dataset$Year),3) , min = 0, max = 2023)
+                          ,numericInput("PredAge", "Age:", value = round(mean(dataset$Age),3), min = 0, max = 100)
+                          ,numericInput("PredSingles", "Singles:", value = round(mean(dataset$Singles),3), min = 0, max = 500)
+                          ,numericInput("PredDoubles", "Doubles:", value = round(mean(dataset$Doubles),3), min = 0, max = 500)
+                          ,numericInput("PredTriples", "Triples:", value = round(mean(dataset$Triples),3), min = 0, max = 500)
+                          ,numericInput("PredxBA", "xBA:", value = round(mean(dataset$xBA),3), min = 0, max = 1)
+                          ,numericInput("PredxSLG", "xSLG:", value = round(mean(dataset$xSLG),3), min = 0, max = 1)
+                          ,numericInput("PredxWOBA", "xWOBA:", value = round(mean(dataset$xWOBA),3), min = 0, max = 1)
+                          ,numericInput("PredxOBP", "xOBP:", value = round(mean(dataset$xOBP),3), min = 0, max = 1)
+                          ,numericInput("PredxIso", "xIso:", value = round(mean(dataset$xIso),3), min = 0, max = 1)
+                          ,numericInput("PredxWOBACON", "xWOBACON:", value = round(mean(dataset$xWOBACON),3), min = 0, max = 1)
+                          ,numericInput("PredAvgExitVelo", "AvgExitVelo:", value = round(mean(dataset$AvgExitVelo),3), min = 0, max = 500)
+                          ,numericInput("PredAvgLaunchAngle", "AvgLaunchAngle:", value = round(mean(dataset$AvgLaunchAngle),3), min = 0, max = 500)
+                          ,numericInput("PredBarreledRate", "BarreledRate:", value = round(mean(dataset$BarreledRate),3), min = 0, max = 500)
+                          ,numericInput("PredHardHitPct", "HardHitPct:", value = round(mean(dataset$HardHitPct),3), min = 0, max = 500)
+                          ,numericInput("PredZswingPct", "ZswingPct:", value = round(mean(dataset$ZswingPct),3), min = 0, max = 500)
+                          ,numericInput("PredInZonePct", "InZonePct:", value = round(mean(dataset$InZonePct),3), min = 0, max = 500)
+                          ,numericInput("PredLineDrivePct", "LineDrivePct:", value = round(mean(dataset$LineDrivePct),3), min = 0, max = 500)
+                          ,numericInput("PredTotalHits", "TotalHits:", value = round(mean(dataset$TotalHits),3), min = 0, max = 500)
+                          ,selectInput("PredPositionGroup", "PositionGroup:", choices = c("Infield","Outfield","Designated Hitter"),
+                                       selected = "Infield")
+                          ,selectInput("PredAgeCategorical", "AgeCategorical:", choices = c('25 or younger','Between 26-30','Between 31-35','36 or older'), 
+                                       selected = "25 or younger")
+                          ,selectInput("PredPosition", "Position:", choices = c('C','1B','2B','3B','SS','LF','CF','RF','DH'),  selected = "C"),
+                          actionButton("predictButton", "Make Prediction!")
+                        ),
+                        mainPanel(
+                          p("Prior to using this tab, please ensure you fit an appropriate model on the 'Model Fitting' tab.
                    Please input values for each of the variables you selected to form a prediction on your model.
                      The values that originally occupy the input boxes are simply the mean of that variable from the dataset. 
                      Note the levels for each categorical variable when inputting them in particular."),
-                    p("PositionGroup's levels are 'Infield', 'Outfield', and 'Designated Hitter'.
+                          p("PositionGroup's levels are 'Infield', 'Outfield', and 'Designated Hitter'.
                      Position's levels are 'C', '1B', '2B', '3B', 'SS', 'LF', 'CF', 'RF', 'DH'.
                      AgeCategorical's levels are '25 or younger', 'Between 26-30', 'Between 31-35', '36 or older'."),
-                   p("As a reminder, below are the models you've selected for the Random Forest Model:"),
-                   verbatimTextOutput("model1_vars_selected"),
-                   p("As a reminder, below are the models you've selected for the Generalized Linear Regression Model:"),
-                   verbatimTextOutput("model2_vars_selected"),
-                   p("The following two sentences will further populate once you have pressed the 'Make Prediction!' button."),   
-                   p("Your Random Forest Model returns the following,"),
-                   verbatimTextOutput("model1Outcome"),
-                   p("Your Generalized Linear Regression Model returns the following,"),
-                   verbatimTextOutput("model2Outcome")
-                 )
-              )
-      )
+                          p("As a reminder, below are the models you've selected for the Random Forest Model:"),
+                          verbatimTextOutput("model1_vars_selected"),
+                          p("As a reminder, below are the models you've selected for the Generalized Linear Regression Model:"),
+                          verbatimTextOutput("model2_vars_selected"),
+                          p("The following two sentences will further populate once you have pressed the 'Make Prediction!' button."),   
+                          p("Your Random Forest Model returns the following,"),
+                          verbatimTextOutput("model1Outcome"),
+                          p("Your Generalized Linear Regression Model returns the following,"),
+                          verbatimTextOutput("model2Outcome")
+                        )
+               )
+             )
     )
   )
 )
@@ -430,41 +422,41 @@ server <- function(input, output, session) {
     rowname <- input$Row
     colname <- input$Column
     
-      table <- table(
-        # Row Name
-        factor(filteredDataCat()[[rowname]]),
-        # Column Name
-        factor(filteredDataCat()[[colname]]))
-      
-      as.data.frame.matrix(table)
+    table <- table(
+      # Row Name
+      factor(filteredDataCat()[[rowname]]),
+      # Column Name
+      factor(filteredDataCat()[[colname]]))
+    
+    as.data.frame.matrix(table)
   }, include.rownames = TRUE
   )
   
   output$catPlot <- renderPlot(
-  if(input$CatPlotType == "Barchart"){
-    
+    if(input$CatPlotType == "Barchart"){
+      
       if(input$CatVariable == "PositionGroup"){
-      ggplot(filteredDataCat(),
-             aes(
-               x=factor(PositionGroup)
-             )) + 
-        geom_bar(fill ="#377EB8", color = "black") +
-        ylab("Total Count") +
-        xlab("Position Group") +
-        theme_classic() +
+        ggplot(filteredDataCat(),
+               aes(
+                 x=factor(PositionGroup)
+               )) + 
+          geom_bar(fill ="#377EB8", color = "black") +
+          ylab("Total Count") +
+          xlab("Position Group") +
+          theme_classic() +
           theme(axis.text.x = element_text(size = 15),
                 axis.text.y = element_text(size = 15),
                 axis.title.y = element_text(size = 15),
                 axis.title.x = element_text(size = 15))
         
       }else if(input$CatVariable == "Position"){
-      ggplot(filteredDataCat(),
-             aes(
-               x=factor(Position)
-             )) + 
-        geom_bar(fill ="#377EB8", color = "black") +
-        ylab("Total Count") +
-        xlab("Position") +
+        ggplot(filteredDataCat(),
+               aes(
+                 x=factor(Position)
+               )) + 
+          geom_bar(fill ="#377EB8", color = "black") +
+          ylab("Total Count") +
+          xlab("Position") +
           theme_classic() +
           theme(axis.text.x = element_text(size = 15),
                 axis.text.y = element_text(size = 15),
@@ -483,7 +475,7 @@ server <- function(input, output, session) {
                 axis.text.y = element_text(size = 15),
                 axis.title.y = element_text(size = 15),
                 axis.title.x = element_text(size = 15))
-        }
+      }
     }else{
       
       if(input$CatVariable == "PositionGroup"){
@@ -547,81 +539,81 @@ server <- function(input, output, session) {
   })
   
   output$QuantPlot <- renderPlot({
-  
+    
     XvarChoice <- (input$QuantX)
     YvarChoice <- (input$QuantY)
     plotChoice <- input$QuantPlotType  
     
-  if(plotChoice == "Histogram"){
-    # Histogram
-    ggplot(filteredDataQuant(), aes_string(x=XvarChoice)) + 
-      geom_histogram(bins=10, 
-                     fill = "#377EB8", 
-                     color = "black") + # choose density or histogram
-      theme_classic() +
-      ylab("Count") +
-      theme(axis.text.x = element_text(size = 15),
-            axis.text.y = element_text(size = 15),
-            axis.title.y = element_text(size = 15),
-            axis.title.x = element_text(size = 15))
-    
-  }else if(plotChoice == "Density"){
-    # Density Plot
-    ggplot(filteredDataQuant(), aes_string(x=XvarChoice)) + 
-      geom_density(fill = "#377EB8") + # choose density or histogram
-      theme_classic()  +
-      ylab("Density") +
-      theme(axis.text.x = element_text(size = 15),
-            axis.text.y = element_text(size = 15),
-            axis.title.y = element_text(size = 15),
-            axis.title.x = element_text(size = 15),
-            legend.text = element_text(size = 10))
-    
-  }else{
-    # Scatterplot
-    if(input$color == "No"){
-    ggplot(filteredDataQuant(),
-           aes_string(x=XvarChoice, # INPUT var
-               y=YvarChoice
-           )) +
-      scale_color_brewer(palette = "Set1") +
-      geom_point() +
-      theme_bw()  +
-      theme(axis.text.x = element_text(size = 15),
-            axis.text.y = element_text(size = 15),
-            axis.title.y = element_text(size = 15),
-            axis.title.x = element_text(size = 15),
-            legend.text = element_text(size = 15),
-            legend.title = element_text(size = 15))
-    }else{
+    if(plotChoice == "Histogram"){
+      # Histogram
+      ggplot(filteredDataQuant(), aes_string(x=XvarChoice)) + 
+        geom_histogram(bins=10, 
+                       fill = "#377EB8", 
+                       color = "black") + # choose density or histogram
+        theme_classic() +
+        ylab("Count") +
+        theme(axis.text.x = element_text(size = 15),
+              axis.text.y = element_text(size = 15),
+              axis.title.y = element_text(size = 15),
+              axis.title.x = element_text(size = 15))
       
-      if(input$color == "Yes - PositionGroup"){
-      color <- "PositionGroup"
-      }else if(input$color == "Yes - Position"){
-        color <- "Position"
-      }else{
-        color <- "AgeCategorical "
-      }
-      
-      
-      ggplot(filteredDataQuant(),
-             aes_string(x=XvarChoice, # INPUT var
-                        y=YvarChoice,
-                        color = color
-             )) +
-        scale_color_brewer(palette = "Set1") +
-        geom_point() +
-        theme_bw()  +
+    }else if(plotChoice == "Density"){
+      # Density Plot
+      ggplot(filteredDataQuant(), aes_string(x=XvarChoice)) + 
+        geom_density(fill = "#377EB8") + # choose density or histogram
+        theme_classic()  +
+        ylab("Density") +
         theme(axis.text.x = element_text(size = 15),
               axis.text.y = element_text(size = 15),
               axis.title.y = element_text(size = 15),
               axis.title.x = element_text(size = 15),
-              legend.text = element_text(size = 15),
-              legend.title = element_text(size = 15))
+              legend.text = element_text(size = 10))
+      
+    }else{
+      # Scatterplot
+      if(input$color == "No"){
+        ggplot(filteredDataQuant(),
+               aes_string(x=XvarChoice, # INPUT var
+                          y=YvarChoice
+               )) +
+          scale_color_brewer(palette = "Set1") +
+          geom_point() +
+          theme_bw()  +
+          theme(axis.text.x = element_text(size = 15),
+                axis.text.y = element_text(size = 15),
+                axis.title.y = element_text(size = 15),
+                axis.title.x = element_text(size = 15),
+                legend.text = element_text(size = 15),
+                legend.title = element_text(size = 15))
+      }else{
+        
+        if(input$color == "Yes - PositionGroup"){
+          color <- "PositionGroup"
+        }else if(input$color == "Yes - Position"){
+          color <- "Position"
+        }else{
+          color <- "AgeCategorical "
+        }
+        
+        
+        ggplot(filteredDataQuant(),
+               aes_string(x=XvarChoice, # INPUT var
+                          y=YvarChoice,
+                          color = color
+               )) +
+          scale_color_brewer(palette = "Set1") +
+          geom_point() +
+          theme_bw()  +
+          theme(axis.text.x = element_text(size = 15),
+                axis.text.y = element_text(size = 15),
+                axis.title.y = element_text(size = 15),
+                axis.title.x = element_text(size = 15),
+                legend.text = element_text(size = 15),
+                legend.title = element_text(size = 15))
+      }
     }
-  }
     
-})
+  })
   
   
   output$correlation  <- renderPrint({
@@ -638,17 +630,17 @@ server <- function(input, output, session) {
   
   ### DATA SUMMARIES
   filteredData <- reactive({
-          dataset %>%
+    dataset %>%
       filter(Year >= input$years[1] & Year <= input$years[2])
-    })
+  })
   
   output$dataTableSummary <- DT::renderDataTable({
     datatable(filteredData(), 
               options = list(pageLength = 10,
                              scrollX=TRUE)
-              )
+    )
   })
-
+  
   output$mendedSummary <- DT::renderDataTable({
     var_name <- input$varSumChoice
     summaryType <- input$summaryType
@@ -661,10 +653,10 @@ server <- function(input, output, session) {
     `Std. Dev.` <- sd(filteredData()[[var_name]])
     IQR <- IQR(filteredData()[[var_name]])
     mended <- cbind(Min, Max, Mean, Median, Variance, `Std. Dev.`, IQR)
-
+    
     if(summaryType == "All"){
-    datatable(mended,
-              options = list(pageLength = 10))
+      datatable(mended,
+                options = list(pageLength = 10))
     }else if(summaryType == "Max"){
       datatable(as.data.frame(Max),
                 options = list(pageLength = 10))
@@ -693,9 +685,9 @@ server <- function(input, output, session) {
       datatable(as.data.frame(IQR),
                 options = list(pageLength = 10))
     }
-  
+    
   })
-
+  
   ################
   # MODELING TAB #
   ################
@@ -706,85 +698,85 @@ server <- function(input, output, session) {
   observeEvent(input$modelFitButton, {
     # Splitting the data into train and test sets
     
-     splitPct <- input$splitPct/100
-     trainingIndex <- createDataPartition(dataset$HomeRuns, 
-                                              p = splitPct, 
-                                              list=FALSE)
-     train <- dataset[trainingIndex,]
-     test <- dataset[-trainingIndex,]
-     
-     # Cross Validation options
-     ### Specifically for RF
-     ctrl <- trainControl(method = "cv", 
-                          number = input$folds)
-     
-     grid <- expand.grid(mtry = input$grid[1]:input$grid[2])
-     
-     # Random Forest
-     model_1 <- train(
-       as.formula(paste("HomeRuns ~ ", paste(input$model1, collapse = "+"))),
-       data = train,
-       trControl = ctrl,
-       method = "rf",
-       tuneGrid = grid,
-       ntree = input$ntree
-     )
-     fitted_Model1(model_1)
-     
-     # Generalized Linear Regression
-     model_2 <- glm(
-       as.formula(paste("HomeRuns ~ ", paste(input$model2, collapse = "+"))),
-       data = train,
-       family = "poisson"
-         )
-     fitted_Model2(model_2)
-     
-     
-     # Running Predicts on TRAINING/TESTING SET for RMSE 
-     trainPredictsModel1 <- predict(fitted_Model1(), newdata = train)
-     RMSE_TrainRF <- RMSE(trainPredictsModel1, train$HomeRuns)
-     
-     testPredictsModel1 <- predict(fitted_Model1(), newdata = test)
-     RMSE_TestRF <- RMSE(testPredictsModel1, test$HomeRuns)
-     
-     trainPredictsModel2 <- predict(fitted_Model2(), newdata = train, type = "res[pmse")
-     RMSE_TrainGLM <- RMSE(trainPredictsModel2, train$HomeRuns)
-     
-     testPredictsModel2 <- predict(fitted_Model2(), newdata = test, type = "response")
-     RMSE_TestGLM <- RMSE(testPredictsModel2, test$HomeRuns)
-     
-     RMSE_Table <- cbind(RMSE_TrainRF, RMSE_TestRF,
-           RMSE_TrainGLM, RMSE_TestGLM)
-     
-     output$fitStats <- renderDataTable({
-        datatable(
-          as.data.frame(RMSE_Table))
-     })
-     
-     # Variance Importance Plot
-     output$varImp <- renderPlot({
-       # Var Importance Plot
-       importancePlot <- varImp(fitted_Model1())
-       plot <- ggplot(importancePlot, 
-                      aes(x = Overall, 
-                          y = relevel(rownames(importancePlot),
-                                      "MeanDecreaseAccuracy"))) +
-         geom_bar(stat = "identity", fill = "#377EB8") +
-         xlab("Variable") +
-         ylab("Importance") +
-         ggtitle("Variable Importance Plot") +
-         theme_classic() +
-         theme(axis.text.x = element_text(size = 15),
-               axis.text.y = element_text(size = 15),
-               axis.title.y = element_text(size = 15),
-               axis.title.x = element_text(size = 15))
-       
-       plot})
-     # Mult. Lin. Reg. Summary
-     output$modelSummary2 <- renderPrint({
-       print(summary(fitted_Model2()))
-     })
-     
+    splitPct <- input$splitPct/100
+    trainingIndex <- createDataPartition(dataset$HomeRuns, 
+                                         p = splitPct, 
+                                         list=FALSE)
+    train <- dataset[trainingIndex,]
+    test <- dataset[-trainingIndex,]
+    
+    # Cross Validation options
+    ### Specifically for RF
+    ctrl <- trainControl(method = "cv", 
+                         number = input$folds)
+    
+    grid <- expand.grid(mtry = input$grid[1]:input$grid[2])
+    
+    # Random Forest
+    model_1 <- train(
+      as.formula(paste("HomeRuns ~ ", paste(input$model1, collapse = "+"))),
+      data = train,
+      trControl = ctrl,
+      method = "rf",
+      tuneGrid = grid,
+      ntree = input$ntree
+    )
+    fitted_Model1(model_1)
+    
+    # Generalized Linear Regression
+    model_2 <- glm(
+      as.formula(paste("HomeRuns ~ ", paste(input$model2, collapse = "+"))),
+      data = train,
+      family = "poisson"
+    )
+    fitted_Model2(model_2)
+    
+    
+    # Running Predicts on TRAINING/TESTING SET for RMSE 
+    trainPredictsModel1 <- predict(fitted_Model1(), newdata = train)
+    RMSE_TrainRF <- RMSE(trainPredictsModel1, train$HomeRuns)
+    
+    testPredictsModel1 <- predict(fitted_Model1(), newdata = test)
+    RMSE_TestRF <- RMSE(testPredictsModel1, test$HomeRuns)
+    
+    trainPredictsModel2 <- predict(fitted_Model2(), newdata = train, type = "res[pmse")
+    RMSE_TrainGLM <- RMSE(trainPredictsModel2, train$HomeRuns)
+    
+    testPredictsModel2 <- predict(fitted_Model2(), newdata = test, type = "response")
+    RMSE_TestGLM <- RMSE(testPredictsModel2, test$HomeRuns)
+    
+    RMSE_Table <- cbind(RMSE_TrainRF, RMSE_TestRF,
+                        RMSE_TrainGLM, RMSE_TestGLM)
+    
+    output$fitStats <- renderDataTable({
+      datatable(
+        as.data.frame(RMSE_Table))
+    })
+    
+    # Variance Importance Plot
+    output$varImp <- renderPlot({
+      # Var Importance Plot
+      importancePlot <- varImp(fitted_Model1())
+      plot <- ggplot(importancePlot, 
+                     aes(x = Overall, 
+                         y = relevel(rownames(importancePlot),
+                                     "MeanDecreaseAccuracy"))) +
+        geom_bar(stat = "identity", fill = "#377EB8") +
+        xlab("Variable") +
+        ylab("Importance") +
+        ggtitle("Variable Importance Plot") +
+        theme_classic() +
+        theme(axis.text.x = element_text(size = 15),
+              axis.text.y = element_text(size = 15),
+              axis.title.y = element_text(size = 15),
+              axis.title.x = element_text(size = 15))
+      
+      plot})
+    # Mult. Lin. Reg. Summary
+    output$modelSummary2 <- renderPrint({
+      print(summary(fitted_Model2()))
+    })
+    
   })
   
   output$model1_vars_selected <- renderPrint({
@@ -804,53 +796,53 @@ server <- function(input, output, session) {
   
   pred_df <- reactive({
     
-  pred_df <- data.frame(
-    "Year"         = c(input$PredYear)
-    ,"Age"          = c(input$PredAge)
-    ,"Singles"      = c(input$PredSingles)
-    ,"Doubles"      = c(input$PredDoubles)
-    ,"Triples"      = c(input$PredTriples)
-    ,"xBA"          = c(input$PredxBA)
-    ,"xSLG"         = c(input$PredxSLG)
-    ,"xWOBA"        = c(input$PredxWOBA)
-    ,"xOBP"         = c(input$PredxOBP)
-    ,"xIso"         = c(input$PredxIso)
-    ,"xWOBACON"     = c(input$PredxWOBACON)
-    ,"AvgExitVelo"   = c(input$PredAvgExitVelo)
-    ,"AvgLaunchAngle"  = c(input$PredAvgLaunchAngle)
-    ,"BarreledRate"    = c(input$PredBarreledRate)
-    ,"HardHitPct"      = c(input$PredHardHitPct)
-    ,"ZswingPct"       = c(input$PredZswingPct)
-    ,"InZonePct"       = c(input$PredInZonePct)
-    ,"LineDrivePct"    = c(input$PredLineDrivePct)
-    ,"TotalHits"       = c(input$PredTotalHits)
-    ,"PositionGroup"   = c(input$PredPositionGroup)
-    ,"AgeCategorical"  = c(input$PredAgeCategorical)
-    ,"Position"        = c(input$PredPosition)
-  )
-  
-  pred_df
-  
+    pred_df <- data.frame(
+      "Year"         = c(input$PredYear)
+      ,"Age"          = c(input$PredAge)
+      ,"Singles"      = c(input$PredSingles)
+      ,"Doubles"      = c(input$PredDoubles)
+      ,"Triples"      = c(input$PredTriples)
+      ,"xBA"          = c(input$PredxBA)
+      ,"xSLG"         = c(input$PredxSLG)
+      ,"xWOBA"        = c(input$PredxWOBA)
+      ,"xOBP"         = c(input$PredxOBP)
+      ,"xIso"         = c(input$PredxIso)
+      ,"xWOBACON"     = c(input$PredxWOBACON)
+      ,"AvgExitVelo"   = c(input$PredAvgExitVelo)
+      ,"AvgLaunchAngle"  = c(input$PredAvgLaunchAngle)
+      ,"BarreledRate"    = c(input$PredBarreledRate)
+      ,"HardHitPct"      = c(input$PredHardHitPct)
+      ,"ZswingPct"       = c(input$PredZswingPct)
+      ,"InZonePct"       = c(input$PredInZonePct)
+      ,"LineDrivePct"    = c(input$PredLineDrivePct)
+      ,"TotalHits"       = c(input$PredTotalHits)
+      ,"PositionGroup"   = c(input$PredPositionGroup)
+      ,"AgeCategorical"  = c(input$PredAgeCategorical)
+      ,"Position"        = c(input$PredPosition)
+    )
+    
+    pred_df
+    
   })
   
   observeEvent(input$predictButton, {
     
-  model1_Prediction <- predict(fitted_Model1(), pred_df())
-  model2_Prediction <- predict(fitted_Model2(), pred_df(), type = "response")
+    model1_Prediction <- predict(fitted_Model1(), pred_df())
+    model2_Prediction <- predict(fitted_Model2(), pred_df(), type = "response")
+    
+    output$model1Outcome <- renderPrint({
+      
+      print(paste("Predicted # of Home Runs:", model1_Prediction))
+      
+    })
+    output$model2Outcome <- renderPrint({
+      
+      print(paste("Predicted # of Home Runs:", model2_Prediction))
+      
+    })
+    
+  })
   
-  output$model1Outcome <- renderPrint({
-    
-    print(paste("Predicted # of Home Runs:", model1_Prediction))
-    
-  })
-  output$model2Outcome <- renderPrint({
-    
-    print(paste("Predicted # of Home Runs:", model2_Prediction))
-    
-  })
-  
-  })
-
 }
 
 
