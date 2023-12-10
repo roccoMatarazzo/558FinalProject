@@ -12,9 +12,12 @@ The following packages are used in this app:
 - caret
 - RColorBrewer
 
-To install each of these at once, run the following:
-install.packages(c("shiny", "shinythemes", "shinycssloaders", "DT", "tidyverse",
-                    "caret", "RColorBrewer")`
-                    
-The code to run this app via GitHub is:
+To install each of these at once, then run the app itself, run the following:
+
+```{r}
+# Install Packages
+install.packages(c("shiny", "shinythemes", "shinycssloaders", "DT", "tidyverse","caret", "RColorBrewer")
+
+# Run App
 shiny::runGitHub(repo = "558FinalProject", username = "RoccoMatarazzo", ref="main")
+```
