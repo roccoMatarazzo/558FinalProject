@@ -16,7 +16,7 @@ To install each of these at once, then run the app itself, run the following:
 
 ```{r}
 # Install Packages
-install.packages(c("shiny", "shinythemes", "shinycssloaders", "DT", "tidyverse","caret", "RColorBrewer")
+install.packages(c("shiny", "shinythemes", "shinycssloaders", "DT", "tidyverse","caret", "RColorBrewer"))
 
 # Run App
 shiny::runGitHub(repo = "558FinalProject", username = "RoccoMatarazzo", ref="main")
