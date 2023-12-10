@@ -739,7 +739,7 @@ server <- function(input, output, session) {
     testPredictsModel1 <- predict(fitted_Model1(), newdata = test)
     RMSE_TestRF <- RMSE(testPredictsModel1, test$HomeRuns)
     
-    trainPredictsModel2 <- predict(fitted_Model2(), newdata = train, type = "res[pmse")
+    trainPredictsModel2 <- predict(fitted_Model2(), newdata = train, type = "response")
     RMSE_TrainGLM <- RMSE(trainPredictsModel2, train$HomeRuns)
     
     testPredictsModel2 <- predict(fitted_Model2(), newdata = test, type = "response")
